@@ -1,16 +1,61 @@
-# React + Vite
+# Jayam - React E-commerce & Admin Simulation
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A **React.js** e-commerce project with **product management, cart, wishlist, user authentication (Google Login), and order management**. This project simulates an admin panel and complete user dashboard functionality.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## **🚀 Live Demo**
 
-## React Compiler
+[https://manikandan0018.github.io/jayam/](https://manikandan0018.github.io/jayam/)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## **📦 Features**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### **Product Management**
+- Fetch and display products dynamically from a fake REST API.
+- Search and sort products by name, category, or price.
+- Products with `stock = 0` are:
+  - Disabled for adding to cart or wishlist.
+  - Clearly marked as **Out of Stock**.
+
+### **User Authentication & Dashboard**
+- Google Login via **Firebase Authentication**.
+- Navbar dynamically shows:
+  - **Login** / **Logout**
+  - **My Dashboard**
+- Dashboard includes:
+  - **Wishlist** (saved products)
+  - **Cart** (added products)
+  - **Order History** (confirmed orders with status updates)
+
+### **Cart & Checkout**
+- Select one of multiple saved shipping addresses.
+- Confirm order (payment gateway not implemented, simulation only).
+- Admin simulation allows updating **Order Status**:
+  - Default: `On Process`
+  - Editable: `Shipped`, `Delivered`
+- Users can track updated status in **Order History**.
+
+### **UI/UX**
+- Responsive design for desktop and mobile.
+- Clear visual feedback for out-of-stock products.
+- Smooth navigation and dashboard animations.
+
+---
+
+## **⚡ Tech Stack**
+- **Frontend:** React.js, Tailwind CSS
+- **State & Data Fetching:** React Query / Context API
+- **Routing:** React Router DOM
+- **Authentication:** Firebase Google OAuth
+- **API:** Fake REST API (`json-server` or `fakestoreapi.com`)
+
+---
+
+## **💻 Setup & Installation**
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/manikandan0018/jayam.git
+cd jayam
