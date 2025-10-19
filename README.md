@@ -49,7 +49,7 @@ A **React.js** e-commerce project with **product management, cart, wishlist, use
 - **State & Data Fetching:** React Query / Context API
 - **Routing:** React Router DOM
 - **Authentication:** Firebase Google OAuth
-- **API:** Fake REST API (`json-server` or `fakestoreapi.com`)
+- **API:** Fake REST API   `fakestoreapi.com`
 
 ---
 
