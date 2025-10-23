@@ -9,9 +9,10 @@ import {
   FaSignOutAlt,
   FaSignInAlt,
   FaTools,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
 
-// Utility Icon component
 const UtilityIconLink = ({ to, icon: Icon, label, badge }) => (
   <Link
     to={to}
@@ -30,6 +31,7 @@ const UtilityIconLink = ({ to, icon: Icon, label, badge }) => (
 export default function Navbar() {
   const { user, loginWithGoogle, logout } = useContext(AuthContext);
   const [cartCount, setCartCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -45,6 +47,7 @@ export default function Navbar() {
     <Link
       to={to}
       className="text-gray-700 font-medium hover:text-indigo-600 transition-colors px-3 py-2 border-b-2 border-transparent hover:border-indigo-600"
+      onClick={() => setMenuOpen(false)} // close mobile menu after clicking
     >
       {children}
     </Link>
@@ -64,7 +67,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Primary Nav */}
+        {/* Desktop Nav */}
         <div className="hidden md:flex flex-1 justify-center gap-6">
           <NavLink to="/">Home</NavLink>
           <NavLink to="/dashboard">Dashboard</NavLink>
@@ -72,7 +75,7 @@ export default function Navbar() {
           <NavLink to="/order-history">Orders</NavLink>
         </div>
 
-        {/* Utility Icons */}
+        {/* Right Icons */}
         <div className="flex items-center space-x-4">
           <UtilityIconLink icon={FaSearch} label="Search" />
 
@@ -96,13 +99,11 @@ export default function Navbar() {
                   )}
                 </div>
 
-                {/* Dropdown Menu */}
                 <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 hidden group-hover:block transition-all duration-300 z-10">
                   <span className="block px-4 py-2 text-sm text-gray-800 font-semibold truncate">
                     Hi, {user.displayName || "User"}
                   </span>
                   <hr className="my-1" />
-
                   <button
                     onClick={logout}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
@@ -123,7 +124,6 @@ export default function Navbar() {
           )}
 
           <UtilityIconLink to="/wishlist" icon={FaHeart} label="Wishlist" />
-
           <UtilityIconLink
             to="/cart"
             icon={FaShoppingCart}
@@ -131,9 +131,25 @@ export default function Navbar() {
             badge={cartCount}
           />
 
-          <button className="md:hidden text-gray-700">☰</button>
+          {/* Mobile Menu Toggle */}
+          <button
+            className="md:hidden text-gray-700 focus:outline-none"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <FaTimes size={22} /> : <FaBars size={22} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200 shadow-md flex flex-col items-start px-6 py-4 space-y-3">
+          <NavLink to="/">Home</NavLink>
+          <NavLink to="/dashboard">Dashboard</NavLink>
+          <NavLink to="/admin">Admin</NavLink>
+          <NavLink to="/order-history">Orders</NavLink>
+        </div>
+      )}
     </nav>
   );
 }
