@@ -84,7 +84,7 @@ export default function ProductCard({ product, addToCart, addToWishlist }) {
                           : "bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg"
                       }`}
         >
-          {isOutOfStock ? "Unavailable" : "🛒 Add to Cart"}
+          {isOutOfStock ? "Unavailable" : "🛒Add to Cart"}
         </button>
       </div>
     </motion.div>
