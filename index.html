@@ -2,11 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./public/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- ✅ Correct favicon path (public/logo.png) -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+
+    <!-- ✅ Proper title -->
     <title>Aura</title>
+
+    <!-- ✅ SEO and PWA meta tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Aura - Your modern shopping destination" />
+    <meta name="theme-color" content="#ff6f00" />
+    <meta name="author" content="Aura Team" />
+
+    <!-- ✅ Open Graph for social media -->
+    <meta property="og:title" content="Aura" />
+    <meta property="og:description" content="Shop the latest trends at Aura." />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:url" content="https://manikandan0018.github.io/jayam/" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- ✅ Fonts (optional professional look) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
   </head>
-  <body>
+
+  <body style="font-family: 'Poppins', sans-serif; margin: 0; background: #fafafa;">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
