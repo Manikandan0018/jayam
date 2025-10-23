@@ -11,7 +11,6 @@ import {
   FaTools,
 } from "react-icons/fa";
 
-// Utility Icon component
 const UtilityIconLink = ({ to, icon: Icon, label, badge }) => (
   <Link
     to={to}
@@ -30,6 +29,7 @@ const UtilityIconLink = ({ to, icon: Icon, label, badge }) => (
 export default function Navbar() {
   const { user, loginWithGoogle, logout } = useContext(AuthContext);
   const [cartCount, setCartCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -41,10 +41,11 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", updateCartCount);
   }, []);
 
-  const NavLink = ({ to, children }) => (
+  const NavLink = ({ to, children, onClick }) => (
     <Link
       to={to}
-      className="text-gray-700 font-medium hover:text-indigo-600 transition-colors px-3 py-2 border-b-2 border-transparent hover:border-indigo-600"
+      onClick={onClick}
+      className="text-gray-700 font-medium hover:text-indigo-600 transition-colors px-3 py-2 border-b-2 border-transparent hover:border-indigo-600 block"
     >
       {children}
     </Link>
@@ -64,7 +65,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Primary Nav */}
+        {/* Desktop Nav */}
         <div className="hidden md:flex flex-1 justify-center gap-6">
           <NavLink to="/">Home</NavLink>
           <NavLink to="/dashboard">Dashboard</NavLink>
@@ -82,7 +83,6 @@ export default function Navbar() {
                 <UtilityIconLink to="/admin" icon={FaTools} label="Admin" />
               )}
 
-              {/* Profile Dropdown */}
               <div className="group relative cursor-pointer">
                 <div className="flex items-center gap-2">
                   {user.photoURL ? (
@@ -96,13 +96,11 @@ export default function Navbar() {
                   )}
                 </div>
 
-                {/* Dropdown Menu */}
                 <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 hidden group-hover:block transition-all duration-300 z-10">
                   <span className="block px-4 py-2 text-sm text-gray-800 font-semibold truncate">
                     Hi, {user.displayName || "User"}
                   </span>
                   <hr className="my-1" />
-
                   <button
                     onClick={logout}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
@@ -116,14 +114,12 @@ export default function Navbar() {
             <button
               onClick={loginWithGoogle}
               className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-full text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-md"
-              aria-label="Login with Google"
             >
               <FaSignInAlt /> Login
             </button>
           )}
 
           <UtilityIconLink to="/wishlist" icon={FaHeart} label="Wishlist" />
-
           <UtilityIconLink
             to="/cart"
             icon={FaShoppingCart}
@@ -131,9 +127,33 @@ export default function Navbar() {
             badge={cartCount}
           />
 
-          <button className="md:hidden text-gray-700">☰</button>
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden text-gray-700 text-2xl"
+          >
+            ☰
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white shadow-lg border-t border-gray-200">
+          <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>
+            Home
+          </NavLink>
+          <NavLink to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+            Dashboard
+          </NavLink>
+          <NavLink to="/admin" onClick={() => setMobileMenuOpen(false)}>
+            Admin
+          </NavLink>
+          <NavLink to="/order-history" onClick={() => setMobileMenuOpen(false)}>
+            Orders
+          </NavLink>
+        </div>
+      )}
     </nav>
   );
 }
