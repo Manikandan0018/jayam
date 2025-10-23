@@ -2,12 +2,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBJ0w3_s3xYdWPoqKOacvx9NG4AFU15Hss",
-  authDomain: "ecommerce-web-3de75.firebaseapp.com",
-  projectId: "ecommerce-web-3de75",
-  storageBucket: "ecommerce-web-3de75.firebasestorage.app",
-  messagingSenderId: "542686283143",
-  appId: "1:542686283143:web:e3dfb85b8831a877957f22",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);

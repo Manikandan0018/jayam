@@ -10,7 +10,7 @@ export default function ProductCard({ product, addToCart, addToWishlist }) {
     const halfStar = rate % 1 >= 0.5;
     for (let i = 0; i < fullStars; i++) stars.push("★");
     if (halfStar) stars.push("☆");
-    while (stars.length < 5) stars.push("☆"); // fill remaining
+    while (stars.length < 5) stars.push("☆"); 
     return stars.join(" ");
   };
 
