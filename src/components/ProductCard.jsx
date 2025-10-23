@@ -10,7 +10,7 @@ export default function ProductCard({ product, addToCart, addToWishlist }) {
     const halfStar = rate % 1 >= 0.5;
     for (let i = 0; i < fullStars; i++) stars.push("★");
     if (halfStar) stars.push("☆");
-    while (stars.length < 5) stars.push("☆"); 
+    while (stars.length < 5) stars.push("☆");
     return stars.join(" ");
   };
 
@@ -49,8 +49,15 @@ export default function ProductCard({ product, addToCart, addToWishlist }) {
         </p>
 
         {/* Price */}
-        <p className="text-xl font-extrabold text-indigo-600 mb-4 mt-1">
+        <p className="text-xl font-extrabold text-indigo-600 mb-1 mt-1">
           ₹{product.price}
+        </p>
+
+        {/* Stock count */}
+        <p className="text-sm text-gray-500 mb-2">
+          {isOutOfStock
+            ? "Out of Stock"
+            : `${product.stock} item${product.stock > 1 ? "s" : ""} available`}
         </p>
       </div>
 

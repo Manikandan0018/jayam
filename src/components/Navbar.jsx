@@ -8,8 +8,7 @@ import {
   FaHeart,
   FaSignOutAlt,
   FaSignInAlt,
-  FaTachometerAlt, // Dashboard
-  FaTools, // Admin
+  FaTools,
 } from "react-icons/fa";
 
 // Utility Icon component
@@ -32,21 +31,16 @@ export default function Navbar() {
   const { user, loginWithGoogle, logout } = useContext(AuthContext);
   const [cartCount, setCartCount] = useState(0);
 
-  // Update cart count whenever cart in localStorage changes
   useEffect(() => {
     const updateCartCount = () => {
       const cart = JSON.parse(localStorage.getItem("cart")) || [];
       setCartCount(cart.length);
     };
-
     updateCartCount();
-
-    // Optional: Listen for storage changes in other tabs/windows
     window.addEventListener("storage", updateCartCount);
     return () => window.removeEventListener("storage", updateCartCount);
   }, []);
 
-  // NavLink component
   const NavLink = ({ to, children }) => (
     <Link
       to={to}
@@ -81,23 +75,34 @@ export default function Navbar() {
         {/* Utility Icons */}
         <div className="flex items-center space-x-4">
           <UtilityIconLink icon={FaSearch} label="Search" />
+
           {user ? (
             <>
               {user.role === "admin" && (
                 <UtilityIconLink to="/admin" icon={FaTools} label="Admin" />
               )}
 
+              {/* Profile Dropdown */}
               <div className="group relative cursor-pointer">
-                <UtilityIconLink
-                  to="/profile"
-                  icon={FaUserCircle}
-                  label="Profile"
-                />
-                <div className="absolute w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 hidden group-hover:block transition-all duration-300 z-10">
+                <div className="flex items-center gap-2">
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL || "/default-avatar.png"}
+                      alt="Profile"
+                      className="w-9 h-9 rounded-full border-2 border-indigo-500 object-cover"
+                    />
+                  ) : (
+                    <FaUserCircle className="w-8 h-8 text-gray-600" />
+                  )}
+                </div>
+
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 hidden group-hover:block transition-all duration-300 z-10">
                   <span className="block px-4 py-2 text-sm text-gray-800 font-semibold truncate">
                     Hi, {user.displayName || "User"}
                   </span>
                   <hr className="my-1" />
+
                   <button
                     onClick={logout}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
@@ -119,7 +124,6 @@ export default function Navbar() {
 
           <UtilityIconLink to="/wishlist" icon={FaHeart} label="Wishlist" />
 
-          {/* Cart Icon with dynamic count */}
           <UtilityIconLink
             to="/cart"
             icon={FaShoppingCart}

@@ -1,158 +1,268 @@
-import { useEffect, useState } from "react";
-// Using FaRegCalendarAlt for date icon, FaTruck for status icon
-import {
-  FaRegCalendarAlt,
-  FaTruck,
-  FaMapMarkerAlt,
-  FaTag,
-  FaCheckCircle,
-  FaHourglassHalf,
-  FaPlane,
-} from "react-icons/fa";
-
-// Helper function to determine badge color based on status
-const getStatusClasses = (status) => {
-  switch (status) {
-    case "Shipped":
-      return "bg-blue-100 text-blue-800 border-blue-500";
-    case "Delivered":
-      return "bg-green-100 text-green-800 border-green-500";
-    case "On Process":
-    default:
-      return "bg-yellow-100 text-yellow-800 border-yellow-500";
-  }
-};
-
-// Helper function to format the product list for display
-const formatProductList = (products) => {
-  if (!products || products.length === 0) return "N/A";
-  // Assuming the products array contains objects with a 'title' property
-  const titles = products.map((p) => p.title).join(", ");
-  return `${titles.substring(0, 50)}${titles.length > 50 ? "..." : ""}`;
-};
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../api/api";
+import { useState, useEffect } from "react";
+import { FaBoxOpen, FaClipboardList } from "react-icons/fa";
 
 export default function Admin() {
+  const [productStock, setProductStock] = useState({});
+  const [productCategories, setProductCategories] = useState({});
   const [orders, setOrders] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [viewOrders, setViewOrders] = useState(false);
 
-  // Load orders from localStorage on mount
+  // Fetch products
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const res = await api.get("/products");
+      const savedStock = JSON.parse(localStorage.getItem("productStock")) || {};
+      const savedCategories =
+        JSON.parse(localStorage.getItem("productCategories")) || {};
+      return res.data.map((p) => ({
+        ...p,
+        stock: savedStock[p.id] ?? 5,
+        category: savedCategories[p.id] ?? p.category,
+      }));
+    },
+  });
+
   useEffect(() => {
-    // Assuming the order ID is a timestamp number (from Date.now())
-    const storedOrders = JSON.parse(localStorage.getItem("orders")) || [];
-    setOrders(storedOrders.sort((a, b) => b.id - a.id)); // Sort newest first
+    setProductStock(JSON.parse(localStorage.getItem("productStock")) || {});
+    setProductCategories(
+      JSON.parse(localStorage.getItem("productCategories")) || {}
+    );
+    setOrders(JSON.parse(localStorage.getItem("orders")) || []);
   }, []);
 
-  // Update status function
-  const updateStatus = (id, status) => {
-    const updatedOrders = orders.map((o) =>
-      o.id === id ? { ...o, status } : o
-    );
-    setOrders(updatedOrders.sort((a, b) => b.id - a.id));
-    localStorage.setItem("orders", JSON.stringify(updatedOrders)); // persist
+  const handleStockChange = (productId, value) => {
+    const updatedStock = { ...productStock, [productId]: Number(value) };
+    setProductStock(updatedStock);
+    localStorage.setItem("productStock", JSON.stringify(updatedStock));
   };
 
+  const handleCategoryChange = (productId, value) => {
+    const updatedCategories = { ...productCategories, [productId]: value };
+    setProductCategories(updatedCategories);
+    localStorage.setItem(
+      "productCategories",
+      JSON.stringify(updatedCategories)
+    );
+  };
+
+  const handleOrderStatusChange = (orderId, status) => {
+    const updatedOrders = orders.map((o) =>
+      o.id === orderId ? { ...o, status } : o
+    );
+    setOrders(updatedOrders);
+    localStorage.setItem("orders", JSON.stringify(updatedOrders));
+  };
+
+  if (isLoading) return <p className="p-6 text-center">Loading products...</p>;
+
+  const categories = ["All", ...new Set(products.map((p) => p.category))];
+  const filteredProducts = products.filter((p) => {
+    const currentCategory = productCategories[p.id] ?? p.category;
+    return selectedCategory === "All" || currentCategory === selectedCategory;
+  });
+
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-900 mb-8 border-b-4 border-indigo-600/50 pb-2 inline-block">
-        Order Management Dashboard 📊
-      </h2>
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      {/* LEFT SIDEBAR */}
+      <div className="w-full md:w-64 bg-white shadow-lg p-6 flex flex-col gap-4">
+        <h2 className="text-2xl font-bold mb-4 text-indigo-600">Admin Panel</h2>
 
-      {orders.length === 0 ? (
-        <div className="text-center py-10 bg-white rounded-lg shadow-md mt-6">
-          <FaCheckCircle className="w-12 h-12 mx-auto text-green-500 mb-3" />
-          <p className="text-lg text-gray-600">
-            No new orders to manage. Time for a coffee break! ☕
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {orders.map((order) => {
-            const statusClasses = getStatusClasses(order.status);
-            // Convert timestamp ID to readable date
-            const date = new Date(order.id).toLocaleString();
+        <button
+          className={`flex items-center gap-2 p-3 rounded-lg w-full font-semibold transition ${
+            !viewOrders
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-indigo-100"
+          }`}
+          onClick={() => setViewOrders(false)}
+        >
+          <FaBoxOpen /> Manage Products
+        </button>
 
-            return (
-              <div
-                key={order.id}
-                className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300"
-              >
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-4">
-                  {/* Order ID and Date */}
-                  <div className="mb-3 md:mb-0">
-                    <p className="text-sm font-semibold text-gray-500 uppercase flex items-center gap-2">
-                      <FaRegCalendarAlt /> ORDER DATE
-                    </p>
-                    <p className="text-xl font-extrabold text-gray-800">
-                      #{order.id.toString().slice(-6)}
-                      <span className="text-sm font-normal text-gray-600 ml-2">
-                        ({date})
-                      </span>
-                    </p>
+        <button
+          className={`flex items-center gap-2 p-3 rounded-lg w-full font-semibold transition ${
+            viewOrders
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-indigo-100"
+          }`}
+          onClick={() => setViewOrders(true)}
+        >
+          <FaClipboardList /> Manage Orders
+        </button>
+
+        {!viewOrders && (
+          <div className="mt-6">
+            <label className="font-semibold">Filter by Category:</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border p-2 rounded w-full mt-2"
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* MAIN PANEL */}
+      <div className="flex-1 p-6 md:p-8 overflow-auto">
+        {!viewOrders ? (
+          <>
+            <h2 className="text-3xl font-bold mb-6 border-b pb-2">
+              Products Management
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white p-4 rounded-xl shadow-md flex flex-col"
+                >
+                  <img
+                    src={product.image}
+                    alt={product.title}
+                    className="h-40 object-contain mb-4"
+                  />
+                  <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
+                    {product.title}
+                  </h3>
+
+                  <div className="mb-2">
+                    <label className="font-semibold mr-2">Category:</label>
+                    <select
+                      value={productCategories[product.id] ?? product.category}
+                      onChange={(e) =>
+                        handleCategoryChange(product.id, e.target.value)
+                      }
+                      className="border p-1 rounded w-full"
+                    >
+                      {categories
+                        .filter((c) => c !== "All")
+                        .map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                    </select>
                   </div>
 
-                  {/* Status Badge */}
+                  <div className="flex items-center gap-2 mt-auto">
+                    <label className="font-semibold">Stock:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={productStock[product.id] ?? product.stock}
+                      onChange={(e) =>
+                        handleStockChange(product.id, e.target.value)
+                      }
+                      className="border p-1 rounded w-16"
+                    />
+                  </div>
+
+                  {productStock[product.id] === 0 && (
+                    <span className="mt-2 text-red-500 font-semibold">
+                      Out of Stock
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-3xl font-bold mb-6 border-b pb-2">
+              Orders Management
+            </h2>
+
+            {orders.length === 0 ? (
+              <p>No orders yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {orders.map((order) => (
                   <div
-                    className={`px-4 py-1 rounded-full text-sm font-bold border-2 ${statusClasses}`}
+                    key={order.id}
+                    className="bg-white p-5 rounded-xl shadow-md flex flex-col justify-between border border-gray-200 hover:shadow-lg transition"
                   >
-                    <FaTruck className="inline mr-2" />
-                    {order.status}
-                  </div>
-                </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-bold text-lg text-indigo-600">
+                          Order #{order.id}
+                        </h3>
+                        <span className="text-sm text-gray-500">
+                          {order.user || "Guest"}
+                        </span>
+                      </div>
 
-                {/* Order Details Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-700">
-                  {/* Products */}
-                  <div className="truncate">
-                    <p className="font-semibold flex items-center gap-2 mb-1">
-                      <FaTag className="text-indigo-500" /> Products
-                    </p>
-                    <p className="text-sm ml-5">
-                      {formatProductList(order.products)}
-                    </p>
-                  </div>
+                      <div className="border-t pt-2 mt-2">
+                        <h4 className="font-semibold mb-2 text-gray-700">
+                          Products:
+                        </h4>
+                        <div className="space-y-2">
+                          {order.products.map((p) => (
+                            <div
+                              key={p.id}
+                              className="flex items-center gap-3 bg-gray-50 rounded-lg p-2"
+                            >
+                              <img
+                                src={p.image}
+                                alt={p.title}
+                                className="w-14 h-14 object-contain border rounded-md"
+                              />
+                              <div className="flex flex-col items-start">
+                                <span className="font-semibold text-gray-800 line-clamp-1">
+                                  {p.title}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  Qty: {p.quantity || 1}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-                  {/* Address */}
-                  <div className="truncate">
-                    <p className="font-semibold flex items-center gap-2 mb-1">
-                      <FaMapMarkerAlt className="text-indigo-500" /> Address
-                    </p>
-                    <p className="text-sm ml-5 truncate">{order.address}</p>
-                  </div>
+                      <div className="mt-3">
+                        <label className="font-semibold text-gray-700 mr-2">
+                          Status:
+                        </label>
+                        <select
+                          value={order.status}
+                          onChange={(e) =>
+                            handleOrderStatusChange(order.id, e.target.value)
+                          }
+                          className="border p-1 rounded text-sm"
+                        >
+                          <option value="Processing">Processing</option>
+                          <option value="Out for Delivery">
+                            Out for Delivery
+                          </option>
+                          <option value="Delivered">Delivered</option>
+                        </select>
+                      </div>
 
-                  {/* Total */}
-                  <div>
-                    <p className="font-semibold flex items-center gap-2 mb-1">
-                      <span className="text-2xl font-extrabold text-green-600">
-                        ₹{order.totalAmount.toFixed(2)}
-                      </span>
-                    </p>
-                    <p className="text-sm text-gray-500">Total Amount</p>
+                      <div className="mt-3">
+                        <h4 className="font-semibold text-gray-700">
+                          Address:
+                        </h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {order.address || "N/A"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                {/* Status Update Action */}
-                <div className="mt-5 pt-4 border-t border-gray-100 flex justify-end">
-                  <label
-                    htmlFor={`status-${order.id}`}
-                    className="mr-3 font-medium text-gray-700 self-center hidden sm:block"
-                  >
-                    Update Status:
-                  </label>
-                  <select
-                    id={`status-${order.id}`}
-                    value={order.status}
-                    onChange={(e) => updateStatus(order.id, e.target.value)}
-                    className="border-2 border-gray-300 p-2 rounded-lg font-semibold text-gray-800 bg-white focus:border-indigo-500 transition-colors"
-                  >
-                    <option value="On Process">⏳ On Process</option>
-                    <option value="Shipped">✈️ Shipped</option>
-                    <option value="Delivered">✅ Delivered</option>
-                  </select>
-                </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -5,37 +5,49 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
-  const { data: products, isLoading } = useQuery({
+  const { data: productsData, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const res = await api.get("/products");
-      // Add stock and random color for demo
-      const colors = ["Red", "Blue", "Green", "Black", "White"];
-      const ratings = [1, 2, 3, 4, 5];
-      return res.data.map((p) => ({
-        ...p,
-        stock: Math.floor(Math.random() * 5),
-        color: colors[Math.floor(Math.random() * colors.length)],
-        rating: { rate: ratings[Math.floor(Math.random() * ratings.length)] },
-      }));
+      return res.data;
     },
   });
 
+  const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [priceRange, setPriceRange] = useState([0, 1000]);
   const [showInStockOnly, setShowInStockOnly] = useState(false);
-  const [selectedRating, setSelectedRating] = useState(0); // 0 = all ratings
-  const [selectedColor, setSelectedColor] = useState("All");
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Load cart & wishlist from localStorage
+  // Load cart & wishlist
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
     const storedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
     setCart(storedCart);
     setWishlist(storedWishlist);
   }, []);
+
+  // Update products with stock & category from localStorage
+  useEffect(() => {
+    if (!productsData) return;
+    const savedStock = JSON.parse(localStorage.getItem("productStock")) || {};
+    const savedCategories =
+      JSON.parse(localStorage.getItem("productCategories")) || {};
+
+    const updatedProducts = productsData.map((p) => ({
+      ...p,
+      stock: savedStock[p.id] ?? Math.floor(Math.random() * 10),
+      category: savedCategories[p.id] ?? p.category,
+      rating: p.rating || {
+        rate: Math.floor(Math.random() * 5) + 1,
+        count: 10,
+      },
+    }));
+    setProducts(updatedProducts);
+  }, [productsData]);
 
   // Carousel auto-slide
   useEffect(() => {
@@ -64,24 +76,28 @@ export default function Home() {
   };
 
   if (isLoading) return <p className="p-6 text-center">Loading products...</p>;
-  if (!products) return <p className="p-6 text-center">No products found.</p>;
+  if (!products || products.length === 0)
+    return <p className="p-6 text-center">No products found.</p>;
 
-  const carouselImages = products.slice(0, 5);
-  const colorsList = ["All", ...new Set(products.map((p) => p.color))];
+  // Get categories for filter
+  const categories = ["All", ...new Set(products.map((p) => p.category))];
 
+  // Apply filters
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.title
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All" ? true : product.category === selectedCategory;
+    const matchesPrice =
+      product.price >= priceRange[0] && product.price <= priceRange[1];
     const matchesStock = showInStockOnly ? product.stock > 0 : true;
-    const matchesRating =
-      selectedRating > 0
-        ? Math.floor(product.rating.rate) === selectedRating
-        : true;
-    const matchesColor =
-      selectedColor === "All" ? true : product.color === selectedColor;
-    return matchesSearch && matchesStock && matchesRating && matchesColor;
+
+    return matchesSearch && matchesCategory && matchesPrice && matchesStock;
   });
+
+  // Carousel images: first 5 products
+  const carouselImages = products.slice(0, 5);
 
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
@@ -138,7 +154,8 @@ export default function Home() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-6 p-4 bg-white rounded-xl shadow-md">
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4 p-4 bg-white rounded-xl shadow-md flex-wrap">
+        {/* Search */}
         <input
           type="text"
           placeholder="Search for products..."
@@ -147,51 +164,54 @@ export default function Home() {
           className="border-2 border-gray-200 p-3 rounded-full w-full sm:w-1/2 focus:border-indigo-500 transition-colors"
         />
 
-        <div className="flex gap-4 flex-wrap items-center">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showInStockOnly}
-              onChange={(e) => setShowInStockOnly(e.target.checked)}
-            />
-            In Stock Only
-          </label>
+        {/* Category */}
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="border p-2 rounded w-full sm:w-auto"
+        >
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </option>
+          ))}
+        </select>
 
-          <select
-            value={selectedRating}
-            onChange={(e) => setSelectedRating(Number(e.target.value))}
-            className="border p-2 rounded"
-          >
-            <option value={0}>All Ratings</option>
-            <option value={1}>1 Star</option>
-            <option value={2}>2 Stars</option>
-            <option value={3}>3 Stars</option>
-            <option value={4}>4 Stars</option>
-            <option value={5}>5 Stars</option>
-          </select>
-
-          <select
-            value={selectedColor}
-            onChange={(e) => setSelectedColor(e.target.value)}
-            className="border p-2 rounded"
-          >
-            {colorsList.map((color) => (
-              <option key={color} value={color}>
-                {color}
-              </option>
-            ))}
-          </select>
+        {/* Price Filter */}
+        <div className="flex items-center gap-2">
+          <span>
+            Price: ₹{priceRange[0]} - ₹{priceRange[1]}
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={1000}
+            step={50}
+            value={priceRange[1]}
+            onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+            className="w-36"
+          />
         </div>
+
+        {/* Stock */}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showInStockOnly}
+            onChange={(e) => setShowInStockOnly(e.target.checked)}
+          />
+          In Stock Only
+        </label>
       </div>
 
       {/* Products Grid */}
       <h2 className="text-3xl font-extrabold mb-8 text-gray-800 border-b-4 border-indigo-500/50 pb-2 inline-block">
-        ✨ Our Featured Products
+        ✨ Our Products
       </h2>
 
       {filteredProducts.length === 0 ? (
         <p className="text-xl text-gray-500 pt-4">
-          😔 Sorry, no products matched your filters.
+          😔 No products matched your filters.
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
