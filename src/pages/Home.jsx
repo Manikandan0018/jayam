@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/api";
 import ProductCard from "../components/ProductCard";
-import LoaderSkeleton from "../components/LoaderSkeleton"; // loader component
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,7 +22,7 @@ export default function Home() {
   const [showInStockOnly, setShowInStockOnly] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Load cart & wishlist from localStorage
+  // Load cart & wishlist
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
     const storedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
@@ -31,7 +30,7 @@ export default function Home() {
     setWishlist(storedWishlist);
   }, []);
 
-  // Update products with stock & category
+  // Update products with stock & category from localStorage
   useEffect(() => {
     if (!productsData) return;
     const savedStock = JSON.parse(localStorage.getItem("productStock")) || {};
@@ -47,7 +46,6 @@ export default function Home() {
         count: 10,
       },
     }));
-
     setProducts(updatedProducts);
   }, [productsData]);
 
@@ -61,7 +59,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [products]);
 
-  // Add to Cart
   const addToCart = (product) => {
     if (product.stock === 0) return alert("Out of Stock!");
     const updatedCart = [...cart, product];
@@ -70,7 +67,6 @@ export default function Home() {
     alert("✅ Product added to Cart!");
   };
 
-  // Add to Wishlist
   const addToWishlist = (product) => {
     if (product.stock === 0) return alert("Out of Stock!");
     const updatedWishlist = [...wishlist, product];
@@ -79,10 +75,14 @@ export default function Home() {
     alert("💙 Product added to Wishlist!");
   };
 
-  // Categories for filter
+  if (isLoading) return <p className="p-6 text-center">Loading products...</p>;
+  if (!products || products.length === 0)
+    return <p className="p-6 text-center">No products found.</p>;
+
+  // Get categories for filter
   const categories = ["All", ...new Set(products.map((p) => p.category))];
 
-  // Filtered products
+  // Apply filters
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.title
       .toLowerCase()
@@ -96,10 +96,8 @@ export default function Home() {
     return matchesSearch && matchesCategory && matchesPrice && matchesStock;
   });
 
-  // Carousel images (first 5 products)
+  // Carousel images: first 5 products
   const carouselImages = products.slice(0, 5);
-
-  if (isLoading) return <LoaderSkeleton count={8} />; // show loader
 
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
@@ -157,6 +155,7 @@ export default function Home() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4 p-4 bg-white rounded-xl shadow-md flex-wrap">
+        {/* Search */}
         <input
           type="text"
           placeholder="Search for products..."
@@ -165,6 +164,7 @@ export default function Home() {
           className="border-2 border-gray-200 p-3 rounded-full w-full sm:w-1/2 focus:border-indigo-500 transition-colors"
         />
 
+        {/* Category */}
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -177,6 +177,7 @@ export default function Home() {
           ))}
         </select>
 
+        {/* Price Filter */}
         <div className="flex items-center gap-2">
           <span>
             Price: ₹{priceRange[0]} - ₹{priceRange[1]}
@@ -192,6 +193,7 @@ export default function Home() {
           />
         </div>
 
+        {/* Stock */}
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
