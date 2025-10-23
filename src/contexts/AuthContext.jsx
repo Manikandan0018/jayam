@@ -4,7 +4,6 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
 } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 
@@ -14,56 +13,26 @@ export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Google Sign-In (for Normal Users)
+  // Google Sign-In
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
+      provider.addScope("profile"); // ensures photoURL
+      provider.addScope("email");
 
+      const result = await signInWithPopup(auth, provider);
       const loggedInUser = {
         displayName: result.user.displayName,
         email: result.user.email,
         photoURL: result.user.photoURL || "/default-avatar.png",
         uid: result.user.uid,
-        role: "user",
+        role: "user", // default role
       };
-
       setUser(loggedInUser);
-      localStorage.setItem("user", JSON.stringify(loggedInUser));
+
+      console.log("User Info:", loggedInUser);
     } catch (error) {
       console.error("Google Sign-In Error:", error);
-    }
-  };
-
-  // Admin Email/Password Login
-  const loginAsAdmin = async (email, password) => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-
-      // Here you can add check for specific admin email(s)
-      const isAdminEmail = ["admin@aura.com", "superadmin@gmail.com"].includes(
-        result.user.email
-      );
-
-      if (!isAdminEmail) {
-        alert("Access Denied: You are not an admin.");
-        await signOut(auth);
-        return;
-      }
-
-      const adminUser = {
-        displayName: "Admin",
-        email: result.user.email,
-        photoURL: result.user.photoURL || "/admin-avatar.png",
-        uid: result.user.uid,
-        role: "admin",
-      };
-
-      setUser(adminUser);
-      localStorage.setItem("user", JSON.stringify(adminUser));
-    } catch (error) {
-      console.error("Admin Login Error:", error);
-      alert("Invalid admin credentials");
     }
   };
 
@@ -72,27 +41,23 @@ export default function AuthProvider({ children }) {
     try {
       await signOut(auth);
       setUser(null);
-      localStorage.removeItem("user");
     } catch (error) {
       console.error("Logout Error:", error);
     }
   };
 
-  // Persist session
+  // Persist login state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      const savedUser = JSON.parse(localStorage.getItem("user"));
-      if (savedUser) {
-        setUser(savedUser);
-      } else if (currentUser) {
-        const defaultUser = {
+      if (currentUser) {
+        const persistedUser = {
           displayName: currentUser.displayName,
           email: currentUser.email,
           photoURL: currentUser.photoURL || "/default-avatar.png",
           uid: currentUser.uid,
-          role: "user",
+          role: "user", // default role
         };
-        setUser(defaultUser);
+        setUser(persistedUser);
       } else {
         setUser(null);
       }
@@ -103,9 +68,7 @@ export default function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{ user, loginWithGoogle, loginAsAdmin, logout, loading }}
-    >
+    <AuthContext.Provider value={{ user, loginWithGoogle, logout, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );
